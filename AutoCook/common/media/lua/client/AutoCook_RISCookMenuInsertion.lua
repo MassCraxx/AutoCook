@@ -5,26 +5,45 @@ if ActiveMods.getById("currentGame"):isModActive("AuthenticZStudderFix") then
     require('ISUI/InventoryPaneContextMenuFix')
 end
 
+local function getAvailableEvolvedRecipes(baseItem, player, containerList, useFrozen)
+    return RecipeManager.getEvolvedRecipe(baseItem, player, containerList, useFrozen)
+end
+local function getAvailableEvolvedRecipesLog(baseItem, player, containerList, useFrozen)
+    local allRecipes = getEvolvedRecipes()
+    for i=0,allRecipes:size()-1 do
+        local evoRecipe = allRecipes:get(i);
+        if AutoCook.Verbose then print('getAvailableEvolvedRecipes '..tostring(i)..', '..tostring(evoRecipe:getName())..', '..tostring(evoRecipe:getBaseItem())) end
+    end
+    return RecipeManager.getEvolvedRecipe(baseItem, player, containerList, useFrozen)
+end
+
 local function onAddAutoCookContextOption(playerID, context, items)
+    if AutoCook.Verbose then print('onAddAutoCookContextOption '..tostring(playerID)..', '..tostring(context)..', '..tostring(items)) end
     if not items or #items < 1 then
         return
     end
     local baseItem = items[1]
     if not baseItem then
+        if AutoCook.Verbose then print('onAddAutoCookContextOption no base item.') end
         return
     elseif not instanceof(baseItem, "InventoryItem") then
         baseItem = baseItem.items[1]
     end
+    if AutoCook.Verbose then print('onAddAutoCookContextOption base item='..tostring(baseItem:getType())..' '..tostring(baseItem)) end
+    
     
     local player = getSpecificPlayer(playerID)
     local containerList = ISInventoryPaneContextMenu.getContainers(player)
-    local evorecipes = RecipeManager.getEvolvedRecipe(baseItem, player, containerList, false)
+    local evorecipes = getAvailableEvolvedRecipes(baseItem, player, containerList, false)--false?
     -- check if item is a base item for a evo recipe
+    if AutoCook.Verbose then print('onAddAutoCookContextOption evorecipes='..tostring(evorecipes)) end
     if evorecipes then
+        if AutoCook.Verbose then print('onAddAutoCookContextOption evorecipes nb='..tostring(evorecipes:size())) end
         for i=0,evorecipes:size()-1 do
             local recipe = evorecipes:get(i)
+            if AutoCook.Verbose then print('onAddAutoCookContextOption evorecipe '..tostring(i).. ' is resultItem='..tostring(recipe:isResultItem(baseItem))) end
             -- if the item not a prepared meal already
-            if not recipe:isResultItem(baseItem) then
+            if AutoCook.CompleteExistingMeal or not recipe:isResultItem(baseItem) then
                 local items = recipe:getItemsCanBeUse(player, baseItem, containerList)
                 local itemCount = 0
                 if items then

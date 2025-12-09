@@ -21,7 +21,8 @@ AutoCook.GainHunger = 10
 AutoCook.AvailableMinProteinItem = 3.001 --allows to continue overproteining slightly with vegetables when overproteined.
 AutoCook.CookMode = 1 --1 = variety & freshness(default)/ 2=leftovers / 3=loose weight / 4=gain weight / 5=nutritionist(weight balance & strength optim)
 AutoCook.UseRotten = true
-AutoCook.AutoCraftIngredients = true
+AutoCook.AutoCraftIngredients = false--broken, deactivated
+AutoCook.CompleteExistingMeal = false
 AutoCook.AutoCraftRecipes = {}
 AutoCook.AutoCraftItemCache = {} --holds created items used for comparison
 AutoCook.PrioritizeVariety = true
@@ -41,6 +42,7 @@ function AutoCook:init(player)
     else
         -- load mod data
         if AutoCook.Verbose then print ("AutoCook:init: loading modData") end
+        player:getModData().AutoCook.AutoCraftIngredients = false--broken, deactivated
         for key, value in pairs(player:getModData().AutoCook) do
             if AutoCook.Verbose then print ("AutoCook:init: loading " .. tostring(key) .. " = " .. tostring(value)) end
             AutoCook[key] = value
@@ -64,7 +66,7 @@ end
 
 function AutoCook:queueGetSourceitemsAction(player, recipe, containerList)
     local sourceItems = {}
-    local items = RecipeManager.getAvailableItemsNeeded(recipe, player, containerList, nil, nil);
+    local items = AutoCook.getAvailableItemsNeeded(recipe, player, containerList, nil, nil);
 
     if items:isEmpty() then return sourceItems end;
     for i=1,items:size() do
@@ -115,9 +117,9 @@ function AutoCook:continue()--continue method is used by ISContinue
         local potentialCraftedFoodTypes = AutoCook.getPossibleCraftedFoodTypes(self.playerObj, self.recipe, containerList, availableItemTypes);
         for _, potentialCraftedFoodType in pairs(potentialCraftedFoodTypes) do
             -- create comparable fake item from result type or use a precached one
-            local potentialIngredientItem = AutoCook.AutoCraftItemCache[potentialCraftedFoodType]
+            local potentialIngredientItem = AutoCook.AutoCraftItemCache[potentialCraftedFoodType]--currently broken deactivated in UI
             if not potentialIngredientItem then
-                potentialIngredientItem = InventoryItemFactory.CreateItem(potentialCraftedFoodType)
+                potentialIngredientItem = instanceItem(potentialCraftedFoodType)
                 -- set age of a closed canned good to assure valid comparison
                 if potentialIngredientItem.setOffAge then
                     potentialIngredientItem:setOffAge(1000000000)
@@ -144,12 +146,12 @@ function AutoCook:continue()--continue method is used by ISContinue
     --if item needs to be created, get necessary tools and craft it
     local isReal = (usedItem:getContainer() ~= nil or usedItem:getWorldItem() ~= nil)
     if AutoCook.Verbose then print ("AutoCook:chose item " .. usedItem:getType() .. " - isReal: " .. tostring(isReal)) end
-    if not isReal then
+    if not isReal and AutoCook.AutoCraftIngredients then
         local cannedItemRecipe = AutoCook.AutoCraftRecipes[usedItem:getFullType()]
         -- transfer everything we need
         local sourceItems = self:queueGetSourceitemsAction(self.playerObj, cannedItemRecipe, containerList)
         -- craft the thing
-        ISTimedActionQueue.add(ISCraftAction:new(self.playerObj, sourceItems[1], cannedItemRecipe:getTimeToMake(), cannedItemRecipe, self.playerObj:getInventory(), containerList));
+        ISTimedActionQueue.add(ISCraftAction:new(self.playerObj, sourceItems[1], cannedItemRecipe, self.playerObj:getInventory(), containerList));
     else
         --get source items
         if not self.playerObj:getInventory():contains(usedItem) then -- take the item if it's not in our inventory

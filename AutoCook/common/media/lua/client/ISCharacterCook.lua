@@ -25,7 +25,9 @@ function ISCharacterCook:createChildren()
     self:createNumberInput("MaxDuplicate", "UI_AutoCookMaxDuplicate", 1, 6, "UI_AutoCookMaxDuplicateTooltip", UIFont.Small)
     self:createTickBox("PrioritizeVariety", "UI_AutoCookPrioVariety", "UI_AutoCookPrioVarietyTooltip")
     self:createTickBox("UseRotten", "UI_AutoCookUseRotten", "UI_AutoCookUseRottenTooltip")
-    self:createTickBox("AutoCraftIngredients", "UI_AutoCookAutoCraftIngredients", "UI_AutoCookAutoCraftIngredientsTooltip")
+    --self:createTickBox("AutoCraftIngredients", "UI_AutoCookAutoCraftIngredients", "UI_AutoCookAutoCraftIngredientsTooltip")--currently broken deactivated
+
+    self:createTickBox("CompleteExistingMeal", "UI_AutoCookCompleteExistingMeal", "UI_AutoCookCompleteExistingMealTooltip")
     self.textY = self.textY + 15
 
     -- Spices
